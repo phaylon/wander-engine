@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use once_cell::unsync::OnceCell;
-use reagenz::{BehaviorTree, ScriptSource, ScriptError, BehaviorTreeBuilder, query_fn};
+use reagenz::{BehaviorTree, ScriptSource, BehaviorTreeBuilder, query_fn, CompileError};
 use treelang::Indent;
 
 use crate::world::World;
@@ -16,9 +16,9 @@ pub struct Behavior<'a> {
 }
 
 impl<'a> Behavior<'a> {
-    pub fn load<'i, I>(indent: Indent, sources: I) -> Result<Self, ScriptError>
+    pub fn load<I>(indent: Indent, sources: I) -> Result<Self, CompileError>
     where
-        I: IntoIterator<Item = ScriptSource<'i>>,
+        I: IntoIterator<Item = ScriptSource>,
     {
         let mut tree = BehaviorTreeBuilder::default();
         setup_tree_globals(&mut tree);
@@ -37,8 +37,7 @@ fn setup_tree_globals(tree: &mut BehaviorTreeBuilder<Context<'_>, Entity, Effect
     tree.register_global("$^location", |ctx| Value::Ext(ctx.location()));
     tree.register_global("$^space", |ctx| Value::Ext(ctx.space()));
     tree.register_global("$^position", |ctx| {
-        let position = ctx.world.agent_position(ctx.agent).expect("invalid context position");
-        position.clone()
+        ctx.world.agent_position(ctx.agent).expect("invalid context position").clone()
     });
 }
 
